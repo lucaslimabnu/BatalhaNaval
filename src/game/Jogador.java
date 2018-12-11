@@ -69,7 +69,11 @@ public class Jogador {
             // pega o retorno do ataque
             response = host.inFromClient.readLine();
             
-            if(response.contains("Hit")){
+            if(response.contains("ganhou")){
+                System.out.println("Você ganhou!");
+                System.exit(0);
+                success = true;
+            }else if(response.contains("Hit")){
                 int id_ship = Integer.parseInt(response.split(":")[1]);
                 field_attack.area[x][y] = ""+id_ship;
                 System.out.println("Você acertou uma embarcação de tamanho "+ id_ship);
@@ -105,7 +109,11 @@ public class Jogador {
             //retorna para ele o resultado
             response = receive_attack(ataque);
             host.send(response);
-            if( response.contains("Hit") ){
+            if( response.contains("ganhou") ){
+                System.out.println("Você perdeu.");
+                System.exit(0);
+                return false;
+            }else if( response.contains("Hit") ){
                 success = true; //tomou tiro
                 System.out.println("Tomou tiro");
                 return true;
@@ -159,7 +167,11 @@ public class Jogador {
             
             response = host.inFromServer.readLine();
             
-            if(response.contains("Hit")){
+            if(response.contains("ganhou")){
+                System.out.println(response);
+                System.exit(0);
+                success = true;
+            }else if(response.contains("Hit")){
                 int id_ship = Integer.parseInt(response.split(":")[1]);
                 field_attack.area[x][y] = ""+id_ship;
                 System.out.println("Você acertou uma embarcação de tamanho "+ id_ship);
@@ -193,7 +205,11 @@ public class Jogador {
                 //retorna para ele o resultado
                 response = receive_attack(ataque);
                 host.send(response);
-                if( response.contains("Hit") ){
+                if( response.contains("ganhou") ){
+                    System.out.println("Você perdeu.");
+                    System.exit(0);
+                    return false;
+                }else if( response.contains("Hit") ){
                     success = true; //tomou tiro
                     System.out.println("Tomou tiro");
                     return true;
@@ -236,6 +252,16 @@ public class Jogador {
 //            field_attack.area[x][y] = ""+ id_ship;
             this.field_ship.area[x][y] = "X";
             this.fleet[id_ship - 1].receiveAttack(this);
+            boolean jogo = false;
+            for(int i = 0; i < fleet.length; i++){
+                if(fleet[i].life > 0){
+                    jogo = true;
+                    break;
+                }
+            }
+            if(!jogo){
+                return "Você ganhou!";
+            }
             return "Hit no navio:" + id_ship;
         }else{
             this.field_ship.area[x][y] = "X";
