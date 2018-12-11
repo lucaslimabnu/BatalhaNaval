@@ -4,6 +4,7 @@
  * and open the template in the editor.
  */
 package game;
+import java.io.IOException;
 import java.util.Scanner;
 /**
  *
@@ -23,14 +24,28 @@ public class Jogador {
         fleet = field_ship.loadFleet();
     }
     
-    public boolean attackEnemy(Jogador player_attacked){
+    //    #####                                     
+    //   #     # ###### #####  #    # ###### #####  
+    //   #       #      #    # #    # #      #    # 
+    //    #####  #####  #    # #    # #####  #    # 
+    //         # #      #####  #    # #      #####  
+    //   #     # #      #   #   #  #  #      #   #  
+    //    #####  ###### #    #   ##   ###### #    # 
+    //    
+    
+    public boolean attackServerToClient(TCPServer host) throws IOException{
         
+        //Método de ataque do servidor
+
         int x = -1;
         int y = -1;
+        boolean success;
         do{
+            
+            // Mostra os campos
             showFieldShip();
             showFieldAttack();
-            System.out.println("Vez de "+ name + ".");
+            System.out.println("\rSua Vez");
             
             Scanner scan = new Scanner(System.in);
             do{
@@ -38,100 +53,227 @@ public class Jogador {
                 String target = scan.next();
                 x = -1;
                 y = Integer.parseInt(target.substring(1,target.length())) ;
-                System.out.println("O jogador " + name + " atacou a coordenada "+ target);
+                
+                //Converte o X para inteiro
+                x = xConverter(target);
+                
+            }while(!isValidAttack(x, y - 1));
+            
+            y--;
+            //Envia o ataque ao cliente
+            host.send(x+","+y);            
+            
+            String ataque;
+            String response;
 
-                switch(target.substring(0,1).toUpperCase()){
-                    case "A":
-                        x = 0;
-                        break;
-                    case "B":
-                        x = 1;
-                        break;
-                    case "C":
-                        x = 2;
-                        break;
-                    case "D":
-                        x = 3;
-                        break;
-                    case "E":
-                        x = 4;
-                        break;
-                    case "F":
-                        x = 5;
-                        break;
-                    case "G":
-                        x = 6;
-                        break;
-                    case "H":
-                        x = 7;
-                        break;
-                    case "I":
-                        x = 8;
-                        break;
-                    case "J":
-                        x = 9;
-                        break;
-                    case "K":
-                        x = 10;
-                        break;
-                    case "L":
-                        x = 11;
-                        break;
-
-                }
-                System.out.println("Convertido para: "+ x +", "+ y);
-
-            }while(!isValidAttack(x, y - 1, player_attacked.field_ship));
-
+            // pega o retorno do ataque
+            response = host.inFromClient.readLine();
+            
+            if(response.contains("Hit")){
+                int id_ship = Integer.parseInt(response.split(":")[1]);
+                field_attack.area[x][y] = ""+id_ship;
+                System.out.println("Você acertou uma embarcação de tamanho "+ id_ship);
+                success = true;
+            }else{
+                field_attack.area[x][y] = "X";
+                System.out.println("Você errou o tiro.");
+                success = false;
+            }
+            
         // método de sucesso 
-        }while(attack_success(x, y - 1, player_attacked));
-        // caso seja, verificar se acertou algo
-            // identificar o navio e verificar se ele foi afundado totalmente
-           
-        // colocar no mapa de ataques
+        }while(success);
         
-        return true;
+        return false;
+        
     }
     
-    public boolean isValidAttack(int x, int y, Cenario field_attacked){
+    public boolean ServerTakeAttack(TCPServer host) throws IOException{
+        
+        //Método de recebimento de ataque do servidor
+        
+        //Mostra os campos
+        showFieldShip();
+        showFieldAttack();
+
+        String ataque;
+        String response;
+        boolean success;
+
+        do{
+            ataque = host.inFromClient.readLine();
+
+            //retorna para ele o resultado
+            response = receive_attack(ataque);
+            host.send(response);
+            if( response.contains("Hit") ){
+                success = true; //tomou tiro
+                System.out.println("Tomou tiro");
+                return true;
+            }else{
+                success = false;
+                System.out.println("Escapou");
+                return false;
+            }
+
+        }while(success);
+    }
+    
+
+    //    #####                               
+    //   #     # #      # ###### #    # ##### 
+    //   #       #      # #      ##   #   #   
+    //   #       #      # #####  # #  #   #   
+    //   #       #      # #      #  # #   #   
+    //   #     # #      # #      #   ##   #   
+    //    #####  ###### # ###### #    #   #   
+    //                                        
+
+    
+    public boolean attackClientToServer(TCPClient host) throws IOException{
+        
+        int x = -1;
+        int y = -1;
+        boolean success;
+        
+        do{
+            showFieldShip();
+            showFieldAttack();
+            
+            Scanner scan = new Scanner(System.in);
+            do{
+                System.out.println("Digite uma coordenada:");
+                String target = scan.next();
+                x = -1;
+                y = Integer.parseInt(target.substring(1,target.length()));
+
+                x = xConverter(target);
+                
+            }while(!isValidAttack(x, y - 1));
+            y--;
+            
+            //Envia o ataque e espera o retorno do resultado
+            host.send(x+","+ y);
+            
+            String ataque;
+            String response;
+            
+            response = host.inFromServer.readLine();
+            
+            if(response.contains("Hit")){
+                int id_ship = Integer.parseInt(response.split(":")[1]);
+                field_attack.area[x][y] = ""+id_ship;
+                System.out.println("Você acertou uma embarcação de tamanho "+ id_ship);
+                success = true;
+            }else{
+                field_attack.area[x][y] = "X";
+                System.out.println("Você errou o tiro.");
+                success = false;
+            }            
+
+        // método de sucesso 
+        }while(success);
+        
+        return false;
+        
+    }
+    
+    public boolean ClientTakeAttack(TCPClient host) throws IOException{
+        
+        //recebe o ataque do servidor
+            showFieldShip();
+            showFieldAttack();
+            
+            String ataque;
+            String response;
+            boolean success;
+            
+            do{
+                ataque = host.inFromServer.readLine();
+            
+                //retorna para ele o resultado
+                response = receive_attack(ataque);
+                host.send(response);
+                if( response.contains("Hit") ){
+                    success = true; //tomou tiro
+                    System.out.println("Tomou tiro");
+                    return true;
+                }else{
+                    success = false;
+                    System.out.println("Escapou");
+                    return false;
+                }
+                
+            }while(success);
+    }
+    
+    
+    public boolean isValidAttack(int x, int y){
         
         // validar se o ataque está no range
         if(x >= 0 && x <= Configuracao.HEIGHT && 
            y >= 0 && y < Configuracao.WIDTH){
             // validar se é ataque repetido
-            if(field_attack.area[x][y] != "."){
-                return false;
-            }
-            else{
                 return true;
-            }
         }else{
             return false;
         }
         
     }
     
-    public boolean attack_success(int x, int y, Jogador player_attacked){
+    public String receive_attack(String attack){
+        
+        int x = Integer.parseInt(attack.substring(0,1));
+        int y = Integer.parseInt(attack.substring(2,attack.length()));
         
         // se acertou navio
-        if(player_attacked.field_ship.area[x][y] != "."){
+        if(this.field_ship.area[x][y] != "."  && this.field_ship.area[x][y] != "%"){
             // identificar o navio
-            int id_ship = Integer.parseInt(player_attacked.field_ship.area[x][y]);
-            System.out.println("Você acertou o navio: "+ id_ship);
+            System.out.println(this.field_ship.area[x][y]);
+            int id_ship = Integer.parseInt(this.field_ship.area[x][y]);
+            System.out.println("Seu navio "+ id_ship +" foi acertado.");
             
             // chamar o método de verificação do Navio
-            field_attack.area[x][y] = ""+ id_ship;
-            player_attacked.field_ship.area[x][y] = "X";
-            player_attacked.fleet[id_ship - 1].receiveAttack(this, player_attacked);
-            System.out.println(""+ name + " deveria jogar de novo.");
-            return true;
+//            field_attack.area[x][y] = ""+ id_ship;
+            this.field_ship.area[x][y] = "X";
+            this.fleet[id_ship - 1].receiveAttack(this);
+            return "Hit no navio:" + id_ship;
+        }else{
+            this.field_ship.area[x][y] = "X";
+            return "Miss";
         }
-        player_attacked.field_ship.area[x][y] = "X";
-        field_attack.area[x][y] = "X";
-        return false;
             
             
         
+    }
+    
+    public int xConverter(String target){
+        switch(target.substring(0,1).toUpperCase()){
+            case "A":
+                return 0;
+            case "B":
+                return 1;
+            case "C":
+                return 2;
+            case "D":
+                return 3;
+            case "E":
+                return 4;
+            case "F":
+                return 5;
+            case "G":
+                return 6;
+            case "H":
+                return 7;
+            case "I":
+                return 8;
+            case "J":
+                return 9;
+            case "K":
+                return 10;
+            case "L":
+                return 11;
+        }
+        return 0;
     }
     
     public void showFieldShip(){
@@ -145,5 +287,7 @@ public class Jogador {
         System.out.println("Seus ataques:");
         Imprimir.Matriz(field_attack.area);
     }
+    
+   
     
 }

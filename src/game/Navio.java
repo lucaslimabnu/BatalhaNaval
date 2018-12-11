@@ -116,12 +116,11 @@ public class Navio {
     }
     
     
-    public void receiveAttack(Jogador player_attacker, Jogador player_attacked){
+    public void receiveAttack(Jogador player_attacked){
         life -= 1;
         if(life == 0){
             for(int i = 0; i < position.length; i++){
                     player_attacked.field_ship.area[position[i][0]][position[i][1]] = "%";
-                    player_attacker.field_attack.area[position[i][0]][position[i][1]] = "%";
             }
         }
     }  

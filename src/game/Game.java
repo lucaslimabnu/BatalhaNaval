@@ -19,7 +19,7 @@ public class Game {
     
     
     Game () throws UnknownHostException, IOException{
-        letsPlay();
+        introduction();
     }
     
     public static void main (String args[]) throws UnknownHostException, IOException{
@@ -29,24 +29,41 @@ public class Game {
     }
     
     @SuppressWarnings("empty-statement")
-    public void letsPlay() throws UnknownHostException, IOException{
+    public void letsPlayServer(TCPServer host) throws UnknownHostException, IOException{
         on_game = true;
-        introduction();
-                
+            //Servidor
         while(on_game){
             clearScreen();
             
-            // Ataque de um player
-//            CORRIGIR DAQUI PRA FRENTE
+            System.out.println("Ataca!!");
+            while(player.attackServerToClient(host));
+            
+            System.out.println("Recebe!!");
+            while(player.ServerTakeAttack(host));
 
-            while(!player.attackEnemy(player));
-              
         }
-        
+
+    }
+    @SuppressWarnings("empty-statement")
+    public void letsPlayClient(TCPClient host) throws UnknownHostException, IOException{
+        on_game = true;
+            //Servidor
+        while(on_game){
+            clearScreen();
+            
+            System.out.println("Recebe!!");
+            while(player.ClientTakeAttack(host));
+            
+            System.out.println("Ataca!!");
+            while(player.attackClientToServer(host));
+
+        }
+
     }
     
     public void introduction() throws UnknownHostException, IOException{
         
+        int type = 0;
         Scanner scan = new Scanner(System.in);
         System.out.println("Este é o Batalha Naval (Versão TADS 01-2018)");
         System.out.println("Vamos começar...");
@@ -58,14 +75,22 @@ public class Game {
             
             System.out.println("Beleza! Vou iniciar seu servidor.");
             System.out.println("Vamos aguardar seu oponente conectar...");
-            TCPServer host = new TCPServer();
+            final TCPServer host = new TCPServer();
             System.out.println("Servidor inicializado com sucesso.\n ");
             System.out.println("Qual o seu nome?");
             player = new Jogador(scan.next());
             System.out.println("Ótimo, " + player.name+"!");
             host.send(player.name);
             System.out.println("Você vai jogar contra: ");
-            System.out.println(host.inFromClient.readLine());
+            System.out.print(host.inFromClient.readLine());
+            
+            System.out.println("Agora vamos ao que interessa...");
+            System.out.println("Que vença o melhor capitão ;)");
+            System.out.println("Você começa.");
+            
+            letsPlayServer(host);
+            
+            
             
             
         }else if("2".equals(ans)){
@@ -79,13 +104,19 @@ public class Game {
             System.out.println("Ótimo, " + player.name+"!");
             host.send(player.name);
             System.out.println("Você vai jogar contra: ");
-            System.out.println(host.inFromServer.readLine());
+            System.out.print(host.inFromServer.readLine());
             
+            System.out.println("Agora vamos ao que interessa...");
+            System.out.println("Que vença o melhor capitão ;)");
+            System.out.println("O adversário começa.");
+            
+            letsPlayClient(host);
+            
+            
+        }else{
+            System.exit(0);
         }
         
-        System.out.println("Agora vamos ao que interessa...");
-        System.out.println("Que vença o melhor capitão ;)");
-        System.out.println("Você começa.");
         
     }
     
