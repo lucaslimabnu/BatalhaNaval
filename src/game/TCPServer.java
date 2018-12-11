@@ -31,16 +31,10 @@ public class TCPServer {
         
     }
     
-    public void attack() throws IOException{
+    public void send(String sentence) throws IOException{
         
-        clientSentence = inFromClient.readLine();
-        int clientInt = Integer.parseInt(clientSentence); 
-        
-        String newS = inFromUser.readLine();
-        outToClient1.writeBytes(newS+"\n");
-        outToClient1.flush();
-
-        clientSentence = inFromClient.readLine();        
+        outToClient1.writeBytes(sentence+"\n");
+        outToClient1.flush();    
     }
  
 

@@ -29,9 +29,8 @@ public class TCPClient {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
-    public void attack() throws IOException{
+    public void send(String sentence) throws IOException{
         
-        sentence = inFromUser.readLine();
         outToServer.writeBytes(sentence+"\n");
         outToServer.flush();
         

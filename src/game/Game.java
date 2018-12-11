@@ -15,8 +15,7 @@ import java.util.Scanner;
 public class Game {
     
     boolean on_game = false;
-    Jogador player1;
-    Jogador player2;
+    Jogador player;
     
     
     Game () throws UnknownHostException, IOException{
@@ -38,10 +37,9 @@ public class Game {
             clearScreen();
             
             // Ataque de um player
-            while(!player1.attackEnemy(player2));
-            
-            // Ataque de um player
-            while(!player2.attackEnemy(player1));
+//            CORRIGIR DAQUI PRA FRENTE
+
+            while(!player.attackEnemy(player));
               
         }
         
@@ -63,8 +61,9 @@ public class Game {
             TCPServer host = new TCPServer();
             System.out.println("Servidor inicializado com sucesso.\n ");
             System.out.println("Qual o seu nome?");
-            player1 = new Jogador(scan.next());
-            System.out.println("Ótimo, " + player1.name+"!");
+            player = new Jogador(scan.next());
+            System.out.println("Ótimo, " + player.name+"!");
+            host.send(player.name);
             System.out.println("Você vai jogar contra: ");
             System.out.println(host.inFromClient.readLine());
             
@@ -76,16 +75,15 @@ public class Game {
             System.out.println("Qual o IP do servidor? ");
             TCPClient host = new TCPClient(scan.next());
             System.out.println("Qual o seu nome?");
-            player2 = new Jogador(scan.next());
-            System.out.println("Ótimo, " + player1.name+"!");
+            player = new Jogador(scan.next());
+            System.out.println("Ótimo, " + player.name+"!");
+            host.send(player.name);
             System.out.println("Você vai jogar contra: ");
             System.out.println(host.inFromServer.readLine());
             
         }
         
         System.out.println("Agora vamos ao que interessa...");
-        System.out.println("Me permita somente conectar com o computador de seu oponente antes...");
-        System.out.println("Conexão estabelecida!");
         System.out.println("Que vença o melhor capitão ;)");
         System.out.println("Você começa.");
         
